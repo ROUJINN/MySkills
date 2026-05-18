@@ -4,16 +4,17 @@
 from __future__ import annotations
 
 import argparse
+import email.message
 import gzip
 import io
 import json
-import os
 import re
 import shutil
 import tarfile
 import urllib.request
 import zipfile
 from pathlib import Path
+from urllib.parse import unquote
 
 
 def normalize_arxiv_id(value: str) -> str:
@@ -30,6 +31,27 @@ def normalize_arxiv_id(value: str) -> str:
 
 def safe_name(arxiv_id: str) -> str:
     return arxiv_id.replace("/", "_")
+
+
+def default_archive_filename(arxiv_id: str) -> str:
+    return f"arXiv-{safe_name(arxiv_id)}.tar.gz"
+
+
+def content_disposition_filename(value: str | None) -> str | None:
+    if not value:
+        return None
+    message = email.message.Message()
+    message["content-disposition"] = value
+    filename = message.get_param("filename", header="content-disposition")
+    if filename:
+        return Path(unquote(filename)).name
+    filename_star = message.get_param("filename*", header="content-disposition")
+    if isinstance(filename_star, tuple):
+        _charset, _language, encoded = filename_star
+        return Path(unquote(encoded)).name
+    if isinstance(filename_star, str):
+        return Path(unquote(filename_star)).name
+    return None
 
 
 def is_within_directory(directory: Path, target: Path) -> bool:
@@ -70,6 +92,13 @@ def extract_source(archive_path: Path, source_dir: Path) -> dict:
     data = archive_path.read_bytes()
     source_dir.mkdir(parents=True, exist_ok=True)
 
+    if data.startswith(b"%PDF-"):
+        return {
+            "kind": "pdf-only",
+            "files": [],
+            "issue": "arXiv returned a PDF instead of a source archive; no source TeX is available for this paper.",
+        }
+
     if tarfile.is_tarfile(archive_path):
         return {"kind": "tar", "files": safe_extract_tar(data, source_dir)}
 
@@ -82,6 +111,12 @@ def extract_source(archive_path: Path, source_dir: Path) -> dict:
         decompressed = None
 
     if decompressed is not None:
+        if decompressed.startswith(b"%PDF-"):
+            return {
+                "kind": "gzip-pdf-only",
+                "files": [],
+                "issue": "arXiv returned a gzipped PDF instead of a source archive; no source TeX is available for this paper.",
+            }
         try:
             return {"kind": "gzip-tar", "files": safe_extract_tar(decompressed, source_dir)}
         except tarfile.TarError:
@@ -95,11 +130,28 @@ def extract_source(archive_path: Path, source_dir: Path) -> dict:
     return {"kind": "raw", "files": [text_path.name]}
 
 
-def download(url: str, dest: Path) -> None:
+def download(url: str, dest_dir: Path, arxiv_id: str) -> tuple[Path, dict]:
     request = urllib.request.Request(url, headers={"User-Agent": "codex-arxiv-source-ingester/1.0"})
     with urllib.request.urlopen(request, timeout=60) as response:
+        filename = content_disposition_filename(response.headers.get("Content-Disposition"))
+        dest = dest_dir / (filename or default_archive_filename(arxiv_id))
         with dest.open("wb") as fh:
             shutil.copyfileobj(response, fh)
+        metadata = {
+            "content_type": response.headers.get("Content-Type"),
+            "content_disposition": response.headers.get("Content-Disposition"),
+            "final_url": response.geturl(),
+        }
+    return dest, metadata
+
+
+def existing_archive_file(archive_dir: Path) -> Path | None:
+    if not archive_dir.exists():
+        return None
+    if archive_dir.is_file():
+        return archive_dir
+    archive_files = sorted(p for p in archive_dir.iterdir() if p.is_file())
+    return archive_files[0] if archive_files else None
 
 
 def main() -> int:
@@ -116,14 +168,25 @@ def main() -> int:
     paper_root = Path(args.paper_root)
     dossier_dir = paper_root / safe_name(arxiv_id)
     source_dir = dossier_dir / "source"
-    archive_path = dossier_dir / "source_archive"
+    archive_dir = dossier_dir / "source_archive"
     url = f"https://arxiv.org/src/{arxiv_id}"
 
     dossier_dir.mkdir(parents=True, exist_ok=True)
-    if archive_path.exists() and not args.force:
+    if archive_dir.exists() and args.force:
+        if archive_dir.is_dir():
+            shutil.rmtree(archive_dir)
+        else:
+            archive_dir.unlink()
+    if not archive_dir.exists():
+        archive_dir.mkdir(parents=True, exist_ok=True)
+
+    existing_archive = existing_archive_file(archive_dir)
+    if existing_archive and not args.force:
+        archive_path = existing_archive
         downloaded = False
+        download_metadata = {}
     else:
-        download(url, archive_path)
+        archive_path, download_metadata = download(url, archive_dir, arxiv_id)
         downloaded = True
 
     if source_dir.exists() and args.force:
@@ -134,15 +197,22 @@ def main() -> int:
         extraction = extract_source(archive_path, source_dir)
 
     tex_files = [str(p.relative_to(dossier_dir)) for p in source_dir.rglob("*.tex")]
+    source_issue = extraction.get("issue")
+    if not tex_files and not source_issue:
+        source_issue = "No .tex files were found after extracting the arXiv source payload."
     report = {
         "arxiv_id": arxiv_id,
         "url": url,
         "dossier_dir": str(dossier_dir),
+        "archive_dir": str(archive_dir),
         "archive_path": str(archive_path),
         "source_dir": str(source_dir),
         "downloaded": downloaded,
+        "download_metadata": download_metadata,
         "extraction": extraction,
         "tex_files": tex_files,
+        "has_tex": bool(tex_files),
+        "source_issue": source_issue,
         "suggested_summary_path": str(dossier_dir / f"{safe_name(arxiv_id).replace('.', '_')}.md"),
     }
     (dossier_dir / "extraction_report.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
