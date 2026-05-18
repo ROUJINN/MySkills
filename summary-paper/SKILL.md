@@ -7,6 +7,8 @@ description: Summarize one academic paper from local TeX source, an extracted ar
 
 Purpose: write a focused summary for one paper from TeX and/or PDF. This skill does not
 download arXiv source or do broad literature search.
+For PDF reading, extraction, rendering, OCR-like visual checks, or layout-sensitive review,
+use the `pdf` skill and incorporate its extracted/verified content into the summary.
 
 ## Inputs
 
@@ -16,13 +18,16 @@ download arXiv source or do broad literature search.
 - optional project context from the user
 
 Prefer TeX when both TeX and PDF exist, unless the user says the PDF is authoritative.
+When TeX is unavailable but a PDF exists, use the `pdf` skill rather than ad hoc PDF
+handling.
 
 ## Rules
 
 - Summarize only the provided paper.
 - Do not invent metadata; use `Unknown` when needed.
 - Read an existing summary before editing it.
-- Mark unreadable PDF pages or weak extraction clearly.
+- Mark unreadable PDF pages or weak extraction clearly, based on the `pdf` skill's
+  extraction/rendering results.
 
 ## Workflow
 
@@ -30,8 +35,9 @@ Prefer TeX when both TeX and PDF exist, unless the user says the PDF is authorit
    conclusion, appendix, and figure/table captions.
 2. For TeX, identify the main file by `\documentclass` or `\begin{document}`; follow
    `\input{}` / `\include{}` and inspect `.bib` / `.bbl` when citations matter.
-3. For PDF, extract text with available local tools; use visual/OCR inspection only when
-   needed and available.
+3. For PDF, invoke the `pdf` skill. Prefer its rendered-page inspection when layout,
+   figures, tables, equations, or extraction quality matter; use its text extraction output
+   for quick reading.
 4. Write the summary beside the input, or as `paper/<arxiv_id>/<arxiv_id_with_underscores>.md`
    for a dossier.
 

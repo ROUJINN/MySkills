@@ -1,12 +1,12 @@
 ---
 name: ingesting-arxiv-source
-description: Download and extract one explicit arXiv paper source into paper/<arxiv_id>/. Use when the user gives an arXiv ID or arXiv source URL and wants the source fetched, unpacked, refreshed, or prepared for summary-paper.
+description: Download one explicit arXiv payload into paper/<arxiv_id>/, extract it when source files are available, and report whether the payload contains TeX or is PDF-only.
 ---
 
 # Ingesting arXiv Source
 
-Purpose: fetch one named arXiv source archive and unpack it locally. This skill does not
-summarize papers; use `summary-paper` after ingestion if needed.
+Purpose: fetch one named arXiv payload and unpack it locally when it is source. This skill
+does not summarize papers or plan downstream summarization.
 
 ## Rules
 
@@ -36,10 +36,12 @@ Use `--force` only when the user wants to refresh existing archive/source files.
    If the report says `has_tex: false` or `source_issue` is set, tell the user
    explicitly that no source TeX was available/found. This is expected for papers
    where arXiv only serves a PDF from the source endpoint, such as `1601.00991`.
-4. If the user also asked for a summary, hand off the dossier or `source/` directory to
-   `summary-paper`.
+4. Stop after reporting whether the downloaded arXiv payload contains TeX source or is
+   PDF-only. If the local payload is a PDF and the task is only to inspect that PDF, use
+   the `pdf` skill.
 
 ## Output
 
-Report the dossier path, whether TeX files were found, and any source/extraction issue.
-If `summary-paper` also ran, include the summary path.
+Report the dossier path, the downloaded payload path, whether TeX files were found, and
+whether the payload is PDF-only. When no source TeX is available, explicitly say that
+there is no source TeX for this arXiv item.
