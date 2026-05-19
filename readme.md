@@ -1,13 +1,13 @@
 usage:
 
-查找 ~/.codex/skills/ 下的所有软链接（-type l）并删除
+查找 ~/.codex/skills/ 下的所有软链接（-type l）并删除，然后重新链接
 find ~/.codex/skills/ -type l -delete
 ln -snf ~/Desktop/code/MySkills/* ~/.codex/skills/
 
 created by myself:
 
 add-reference
-summary-reference
+summarize-reference
 
 adapted from https://github.com/Orchestra-Research/AI-research-SKILLs :
 

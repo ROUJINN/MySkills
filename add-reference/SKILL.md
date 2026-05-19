@@ -13,7 +13,6 @@ Create a compact paper reference folder under `references/` from either:
 - an arXiv ID
 
 Use MinerU for PDF parsing. After parsing, keep only the generated `.md` file(s) and image assets.
-MinerU can be slow; budget roughly 6 minutes for a 22-page PDF.
 
 ## Directory Layout
 

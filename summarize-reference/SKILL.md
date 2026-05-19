@@ -1,9 +1,9 @@
 ---
-name: summary-reference
+name: summarize-reference
 description: Summarize one saved reference by id or name from references/, reading TeX or Markdown files from original/ and writing summary/summary.md. Use when asked to summarize, understand, or make notes for a saved reference, paper, arXiv entry, or MinerU-parsed PDF.
 ---
 
-# Summary Reference
+# Summarize Reference
 
 Input is `<id-or-name>`. Locate `references/<id-or-name>/original/`.
 
