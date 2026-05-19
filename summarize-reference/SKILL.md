@@ -26,6 +26,8 @@ Input is `<id-or-name>`. Locate `references/<id-or-name>/original/`.
 - **Authors**: <authors or Unknown>
 - **Year**: <year or Unknown>
 
+## 一句话总结本文
+
 ## 1. 这篇论文试图解决什么问题？
 
 ## 2. 有哪些相关研究？
@@ -35,8 +37,6 @@ Input is `<id-or-name>`. Locate `references/<id-or-name>/original/`.
 ## 4. 论文做了哪些实验？
 
 ## 5. 有什么可以进一步探索的点？
-
-## Notes for Our Project
 ```
 
 Write in the user's preferred language.
