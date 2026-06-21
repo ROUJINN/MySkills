@@ -1,6 +1,6 @@
 ---
 name: summarize-reference
-description: Summarize one saved reference by id or name from references/, reading TeX or Markdown files from original/ and writing summary/summary.md. Use when asked to summarize, understand, or make notes for a saved reference, paper, arXiv entry, or MinerU-parsed PDF.
+description: Summarize and optionally rename one saved reference by id or name from references/, reading TeX or Markdown files from original/ and writing summary/summary.md. Use when asked to summarize, understand, rename, or make notes for a saved reference, paper, arXiv entry, or MinerU-parsed PDF.
 ---
 
 # Summarize Reference
@@ -12,19 +12,15 @@ Input is `<id-or-name>`. Locate `references/<id-or-name>/original/`.
 - Prefer `.tex` files in `original/`; otherwise use MinerU `.md` files.
 - Decide whether the material is an academic paper.
 - If it is a paper, use the paper template below; otherwise choose a concise structure.
-- Write `references/<id-or-name>/summary/summary.md`; ensure `summary/` and `original/` are siblings.
+- After reading enough content, choose a short readable lowercase slug for the reference folder. Prefer an established paper/system shorthand such as `mamba` or `clip`; otherwise derive a compact name from the title.
+- If the chosen slug differs from `<id-or-name>` and `references/<slug>/` does not exist, rename `references/<id-or-name>/` to `references/<slug>/`.
+- Write `references/<final-name>/summary/summary.md`; ensure `summary/` and `original/` are siblings.
 - Read any existing `summary/summary.md` before overwriting.
-- Do not invent metadata; use `Unknown` when needed.
 
 ## Paper Summary Template
 
 ```markdown
 # <Paper Title>
-
-## Metadata
-- **Source**: <path, URL, arXiv ID, or PDF filename>
-- **Authors**: <authors or Unknown>
-- **Year**: <year or Unknown>
 
 ## 一句话总结本文
 
@@ -43,5 +39,5 @@ Write in the user's preferred language.
 
 ## Output
 
-Report the summary path, whether it used TeX or Markdown, and any important uncertainty.
+Report the summary path, whether the reference folder was renamed, whether it used TeX or Markdown, and any important uncertainty.
 Do not paste the full summary unless asked.
