@@ -12,7 +12,7 @@ Input is `<id-or-name>`. Locate `references/<id-or-name>/original/`.
 - Prefer `.tex` files in `original/`; otherwise use MinerU `.md` files.
 - Decide whether the material is an academic paper.
 - If it is a paper, use the paper template below; otherwise choose a concise structure.
-- After reading enough content, choose a short readable lowercase slug for the reference folder. Prefer an established paper/system shorthand such as `mamba` or `clip`; otherwise derive a compact name from the title.
+- After reading enough content, choose a short readable name for the reference folder. Prefer an established paper/system shorthand and preserve its common casing, such as `Mamba` or `CLIP`; otherwise derive a compact name from the title.
 - If the chosen slug differs from `<id-or-name>` and `references/<slug>/` does not exist, rename `references/<id-or-name>/` to `references/<slug>/`.
 - Write `references/<final-name>/summary/summary.md`; ensure `summary/` and `original/` are siblings.
 - Read any existing `summary/summary.md` before overwriting.
